@@ -17,7 +17,9 @@ export default class Comment extends BaseModel {
   @column()
   declare company_id: number
 
-  @belongsTo(() => User)
+  @belongsTo(() => User, {
+    foreignKey: 'user_id',
+  })
   declare user: BelongsTo<typeof User>
 
   @column()

@@ -5,8 +5,12 @@ import type { HttpContext } from '@adonisjs/core/http'
 export default class UserController {
   async getUser({ params }: HttpContext) {
     const user = await User.find(params.id)
-    // userID = params.id
-    const comments = await Comment.query().from('comments').select('*').where({ company_id: 1 })
+    const userID = params.id
+    const comments = await Comment.query()
+      .from('comments')
+      .select('*')
+      .where({ company_id: userID })
+      .preload('user')
 
     return {
       data: {

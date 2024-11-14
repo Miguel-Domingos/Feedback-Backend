@@ -3,11 +3,10 @@ import { createCommentValidator, deleteCommentValidator } from '#validators/comm
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class CommentController {
-  async createComment({ request }: HttpContext) {
+  async createComment({ request, auth }: HttpContext) {
     const data = await request.validateUsing(createCommentValidator)
-
-    await Comment.create(data)
-
+    const authenticatedUser = await auth.authenticate()
+    await Comment.create({ ...data, user_id: authenticatedUser.id, author: authenticatedUser.name })
     return { message: 'success' }
   }
 
@@ -16,10 +15,7 @@ export default class CommentController {
 
     const comment = await Comment.find(comment_id)
 
-    console.log()
-
     if (comment?.user_id === auth.user?.id) {
-      console.log('funciona')
       await comment?.delete()
     }
 
