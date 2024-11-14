@@ -1,41 +1,60 @@
 import User from '#models/user'
-import { loginValidator, registerValidator } from '#validators/auth'
+import { loginValidator } from '#validators/auth'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class AuthController {
-  async register({ request }: HttpContext) {
-    const data = await request.validateUsing(registerValidator)
-    await User.create(data)
-
-    return { message: 'success' }
-  }
-
   async login({ request }: HttpContext) {
-    const { email, password } = await request.validateUsing(loginValidator)
+    try {
+      const { email, password } = await request.validateUsing(loginValidator)
+      const user = await User.verifyCredentials(email, password)
+      const token = await User.accessTokens.create(user)
 
-    const user = await User.verifyCredentials(email, password)
-
-    const token = await User.accessTokens.create(user)
-
-    return {
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
+      return {
+        status: 200,
+        message: 'success',
+        data: {
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            description: user.description,
+          },
+          token: {
+            type: token.toJSON().type,
+            value: token.toJSON().token,
+          },
         },
-        token: {
-          type: token.toJSON().type,
-          value: token.toJSON().token,
-        },
-      },
+        error: null,
+      }
+    } catch (error) {
+      return {
+        status: 401,
+        message: 'error',
+        data: null,
+        error: error.messages ? error.messages[0].message : error.message,
+      }
     }
   }
 
   async logout({ auth }: HttpContext) {
-    const user = auth.user!
-    await User.accessTokens.delete(user, user?.currentAccessToken.identifier)
+    try {
+      const user = auth.user!
+      await User.accessTokens.delete(user, user?.currentAccessToken.identifier)
 
-    return { message: 'success' }
+      return {
+        status: 200,
+        message: 'success',
+        data: null,
+        error: null,
+      }
+    } catch (error) {
+      return {
+        status: 401,
+        message: 'error',
+        data: null,
+        error: error.messages ? error.messages[0].message : error.message,
+      }
+    }
   }
 }

@@ -27,7 +27,6 @@ router
         // Auth Routes
         router
           .group(() => {
-            router.post('/register', [AuthController, 'register']).as('auth_register')
             router.post('/login', [AuthController, 'login']).as('auth_login')
             router
               .delete('/logout', [AuthController, 'logout'])
@@ -46,7 +45,13 @@ router
           .use(middleware.auth())
 
         // User Routes
-        router.get('/user/:id', [UserController, 'getUser']).as('get_user')
+        router
+          .group(() => {
+            router.get('/all', [UserController, 'geAllUser']).as('getAll_user')
+            router.post('/create', [UserController, 'create']).as('create_user')
+            router.get('/:id', [UserController, 'getUser']).as('get_user')
+          })
+          .prefix('/user')
       })
       .prefix('/v1')
   })
